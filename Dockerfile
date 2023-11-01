@@ -1,23 +1,13 @@
-# Use the official Node.js 18.17.1 image as the base image
-FROM node:18.17.1
-
-# Set the working directory in the container to /app
+FROM node:latest as node
 WORKDIR /app
-
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
-
-# Install application dependencies
-RUN npm install
-
-# Copy the entire application source code to the working directory
 COPY . .
-
-# Build your Angular application (you may need to adjust the command based on your project's configuration)
-RUN npm run build
-
-# Expose the port your Angular application will run on (default is 4200)
-EXPOSE 4200
-
-# Start the Angular application when the container runs
-CMD ["npm", "start"]
+RUN npm install
+RUN npm run build --prod
+#stage 2
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=node /app/dist/dev-ops-f /usr/share/nginx/html
+# Expose port 80 for Nginx
+EXPOSE 80
+# Start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
